@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>동동이 단어공부</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="app">
+    <header class="header">
+      <div class="header__brand">
+        <span class="header__logo" aria-hidden="true">📚</span>
+        <h1 class="header__title">동동이 단어공부</h1>
+      </div>
+      <p class="header__subtitle">챕터별 단어를 등록하고, 다양한 방식으로 공부해 보세요!</p>
+    </header>
+
+    <main class="main">
+      <!-- 홈: 챕터 목록 -->
+      <section id="view-home" class="view view--active">
+        <div class="panel">
+          <div class="panel__head">
+            <h2 class="panel__title">챕터 목록</h2>
+            <button type="button" id="btn-add-chapter" class="btn btn--primary">+ 챕터 추가</button>
+          </div>
+          <ul id="chapter-list" class="chapter-list"></ul>
+          <p id="chapter-empty" class="empty-msg">아직 챕터가 없어요. 챕터를 추가해 보세요!</p>
+        </div>
+
+        <div class="panel panel--stats-entry">
+          <div class="panel__head">
+            <h2 class="panel__title">학습 통계</h2>
+            <button type="button" id="btn-open-stats" class="btn btn--secondary">통계 보기</button>
+          </div>
+          <p id="home-stats-summary" class="home-stats-summary">공부를 시작하면 결과가 여기에 요약돼요.</p>
+        </div>
+
+        <div class="panel panel--review">
+          <h2 class="panel__title">자주 틀린 단어 복습</h2>
+          <p class="panel__desc">틀린 횟수가 많은 단어들을 모아서 다시 공부할 수 있어요.</p>
+          <div id="wrong-words-preview" class="wrong-preview"></div>
+          <button type="button" id="btn-review-wrong" class="btn btn--secondary" disabled>복습 시작</button>
+        </div>
+      </section>
+
+      <!-- 학습 통계 -->
+      <section id="view-stats" class="view">
+        <button type="button" id="btn-stats-back" class="btn btn--ghost btn--back">← 목록으로</button>
+        <p id="stats-filter-hint" class="stats-filter-hint" hidden></p>
+
+        <div class="panel panel--stats">
+          <h2 class="panel__title">전체 요약</h2>
+          <div id="stats-summary" class="stats-grid"></div>
+        </div>
+
+        <div class="panel panel--stats">
+          <h2 class="panel__title">정답 · 오답 비율</h2>
+          <div id="stats-ratio-bar" class="ratio-bar"></div>
+          <p id="stats-ratio-text" class="stats-caption"></p>
+        </div>
+
+        <div class="panel panel--stats">
+          <h2 class="panel__title">챕터별 성적</h2>
+          <div id="stats-chapters" class="stats-chapter-list"></div>
+        </div>
+
+        <div class="panel panel--stats">
+          <div class="stats-split">
+            <div class="stats-split__col">
+              <h3 class="stats-subtitle">잘 외운 단어 TOP 5</h3>
+              <ul id="stats-best-words" class="stats-word-list"></ul>
+            </div>
+            <div class="stats-split__col">
+              <h3 class="stats-subtitle">어려운 단어 TOP 5</h3>
+              <ul id="stats-hard-words" class="stats-word-list"></ul>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel panel--stats">
+          <h2 class="panel__title">최근 학습 기록</h2>
+          <ul id="stats-sessions" class="stats-session-list"></ul>
+          <p id="stats-sessions-empty" class="empty-msg empty-msg--hidden">아직 완료한 학습 기록이 없어요.</p>
+        </div>
+      </section>
+
+      <!-- 챕터 상세: 단어 관리 -->
+      <section id="view-chapter" class="view">
+        <button type="button" id="btn-back-home" class="btn btn--ghost btn--back">← 목록으로</button>
+        <div class="panel">
+          <div class="panel__head">
+            <h2 id="chapter-title" class="panel__title">챕터</h2>
+            <div class="panel__actions">
+              <button type="button" id="btn-rename-chapter" class="btn btn--ghost btn--sm">이름 수정</button>
+              <button type="button" id="btn-delete-chapter" class="btn btn--ghost btn--sm btn--danger">챕터 삭제</button>
+            </div>
+          </div>
+          <p class="word-count" id="word-count">단어 0개</p>
+          <button type="button" id="btn-chapter-stats" class="btn btn--ghost btn--sm btn--stats-link">이 챕터 통계 보기</button>
+
+          <form id="word-form" class="word-form">
+            <input type="text" id="input-word" class="input" placeholder="단어" required maxlength="100" />
+            <input type="text" id="input-meaning" class="input" placeholder="뜻 (여러 개: / 또는 , 로 구분)" required maxlength="200" />
+            <button type="submit" class="btn btn--primary">단어 추가</button>
+            <button type="button" id="btn-bulk-paste" class="btn btn--secondary">한번에 붙여넣기</button>
+          </form>
+          <p class="word-form-hint">엑셀·메모에서 <strong>단어, 뜻</strong> 형태로 50줄을 복사해 넣을 수 있어요. 뜻이 여러 개면 <strong>run, 달리다, 뛰다</strong>처럼 쉼표로 이어 쓰면 됩니다.</p>
+
+          <ul id="word-list" class="word-list"></ul>
+          <p id="word-empty" class="empty-msg">단어를 추가해 주세요. (30~50개 권장)</p>
+        </div>
+
+        <div class="panel panel--study-menu">
+          <h3 class="panel__title">공부하기</h3>
+          <p class="panel__desc">단어가 1개 이상 있어야 공부를 시작할 수 있어요.</p>
+          <div class="study-menu">
+            <button type="button" class="study-card" data-mode="flashcard" disabled>
+              <span class="study-card__icon">🃏</span>
+              <span class="study-card__name">플래시 카드</span>
+              <span class="study-card__desc">카드를 뒤집으며 암기</span>
+            </button>
+            <button type="button" class="study-card" data-mode="word-to-meaning" disabled>
+              <span class="study-card__icon">✏️</span>
+              <span class="study-card__name">단어 → 뜻 쓰기</span>
+              <span class="study-card__desc">단어를 보고 뜻 입력</span>
+            </button>
+            <button type="button" class="study-card" data-mode="meaning-to-word" disabled>
+              <span class="study-card__icon">🔄</span>
+              <span class="study-card__name">뜻 → 단어 쓰기</span>
+              <span class="study-card__desc">뜻을 보고 단어 입력</span>
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- 공부 화면 -->
+      <section id="view-study" class="view">
+        <button type="button" id="btn-exit-study" class="btn btn--ghost btn--back">← 공부 종료</button>
+
+        <div class="progress-bar-wrap">
+          <div class="progress-bar">
+            <div id="study-progress-fill" class="progress-bar__fill" style="width: 0%"></div>
+          </div>
+          <span id="study-progress-text" class="progress-text">0 / 0</span>
+        </div>
+
+        <div class="achievement">
+          <div class="achievement__item">
+            <span class="achievement__label">성취도</span>
+            <span id="achievement-rate" class="achievement__value">0%</span>
+          </div>
+          <div class="achievement__item">
+            <span class="achievement__label">맞힌 수</span>
+            <span id="achievement-correct" class="achievement__value">0</span>
+          </div>
+          <div class="achievement__item">
+            <span class="achievement__label">틀린 수</span>
+            <span id="achievement-wrong" class="achievement__value">0</span>
+          </div>
+        </div>
+
+        <p id="study-mode-label" class="study-mode-label"></p>
+
+        <!-- 플래시 카드 -->
+        <div id="study-flashcard" class="study-area study-area--hidden">
+          <div id="flashcard" class="flashcard" role="button" tabindex="0" aria-label="카드 뒤집기">
+            <div class="flashcard__inner">
+              <div class="flashcard__face flashcard__face--front">
+                <span class="flashcard__label">단어</span>
+                <p id="flashcard-front" class="flashcard__text"></p>
+              </div>
+              <div class="flashcard__face flashcard__face--back">
+                <span class="flashcard__label">뜻</span>
+                <p id="flashcard-back" class="flashcard__text"></p>
+              </div>
+            </div>
+          </div>
+          <p class="hint">카드를 클릭하면 뒤집어요</p>
+          <div class="study-actions">
+            <button type="button" id="btn-flash-wrong" class="btn btn--wrong">몰라요</button>
+            <button type="button" id="btn-flash-correct" class="btn btn--correct">알아요</button>
+          </div>
+        </div>
+
+        <!-- 쓰기 모드 -->
+        <div id="study-type" class="study-area study-area--hidden">
+          <p id="type-prompt" class="type-prompt"></p>
+          <form id="type-form" class="type-form">
+            <input type="text" id="type-answer" class="input input--large" placeholder="정답을 입력하세요" autocomplete="off" />
+            <button type="submit" class="btn btn--primary">확인</button>
+          </form>
+          <p id="type-feedback" class="type-feedback" aria-live="polite"></p>
+          <button type="button" id="btn-type-next" class="btn btn--secondary btn--hidden">다음 단어</button>
+        </div>
+
+        <!-- 결과 -->
+        <div id="study-result" class="study-result study-area--hidden">
+          <div class="result-card">
+            <h3>공부 완료! 🎉</h3>
+            <p id="result-summary" class="result-summary"></p>
+            <div class="result-stats">
+              <div class="result-stat">
+                <span class="result-stat__num" id="result-rate">0%</span>
+                <span class="result-stat__label">성취도</span>
+              </div>
+              <div class="result-stat">
+                <span class="result-stat__num" id="result-correct">0</span>
+                <span class="result-stat__label">정답</span>
+              </div>
+              <div class="result-stat">
+                <span class="result-stat__num" id="result-wrong">0</span>
+                <span class="result-stat__label">오답</span>
+              </div>
+            </div>
+            <button type="button" id="btn-study-again" class="btn btn--primary">다시 공부</button>
+            <button type="button" id="btn-result-stats" class="btn btn--secondary">통계 보기</button>
+            <button type="button" id="btn-result-home" class="btn btn--ghost">목록으로</button>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <p>데이터는 이 브라우저에만 저장됩니다 (로컬 스토리지)</p>
+    </footer>
+  </div>
+
+  <!-- 모달: 챕터 추가/이름 수정 -->
+  <dialog id="modal-chapter" class="modal">
+    <form method="dialog" id="chapter-modal-form" class="modal__content">
+      <h3 id="modal-chapter-title" class="modal__title">챕터 추가</h3>
+      <input type="text" id="modal-chapter-input" class="input" placeholder="챕터 이름 (예: 1단원)" required maxlength="50" />
+      <div class="modal__actions">
+        <button type="button" id="modal-chapter-cancel" class="btn btn--ghost">취소</button>
+        <button type="submit" class="btn btn--primary">저장</button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- 모달: 단어 일괄 붙여넣기 -->
+  <dialog id="modal-bulk" class="modal modal--wide">
+    <form method="dialog" id="bulk-modal-form" class="modal__content">
+      <h3 class="modal__title">단어 한번에 붙여넣기</h3>
+      <p class="modal__desc">한 줄에 하나씩 입력하세요. 쉼표(,)로 구분하는 방식이 가장 편해요.</p>
+      <pre class="bulk-example" aria-hidden="true">apple, 사과
+book, 책
+run, 달리다, 뛰다</pre>
+      <textarea
+        id="bulk-textarea"
+        class="input input--textarea"
+        rows="12"
+        placeholder="단어, 뜻&#10;단어, 뜻&#10;...&#10;&#10;엑셀에서 복사하면 탭으로도 구분됩니다."
+      ></textarea>
+      <p id="bulk-preview" class="bulk-preview">0줄 인식됨</p>
+      <div class="modal__actions">
+        <button type="button" id="modal-bulk-cancel" class="btn btn--ghost">취소</button>
+        <button type="submit" class="btn btn--primary">추가하기</button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- 모달: 단어 수정 -->
+  <dialog id="modal-word" class="modal">
+    <form method="dialog" id="word-modal-form" class="modal__content">
+      <h3 class="modal__title">단어 수정</h3>
+      <input type="text" id="modal-word-input" class="input" placeholder="단어" required maxlength="100" />
+      <input type="text" id="modal-meaning-input" class="input" placeholder="뜻 (여러 개: / 또는 , 로 구분)" required maxlength="200" />
+      <div class="modal__actions">
+        <button type="button" id="modal-word-cancel" class="btn btn--ghost">취소</button>
+        <button type="submit" class="btn btn--primary">저장</button>
+      </div>
+    </form>
+  </dialog>
+
+  <script src="app.js"></script>
+</body>
+</html>
